@@ -105,9 +105,32 @@ namespace PolicyManagement.API.Controllers
                 return NotFound("Cliente no encontrado");
             }
 
+            var updated = false;
+
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var normalizedEmail = request.Email.Trim();
+
+                var emailInUse = await _context.Clients
+                    .AnyAsync(c => c.Id != customerId && c.Email == normalizedEmail);
+
+                if (emailInUse)
+                {
+                    return Conflict("El correo electrónico ya está en uso por otro cliente");
+                }
+
+                customer.Email = normalizedEmail;
+                updated = true;
+            }
+
             if (!string.IsNullOrWhiteSpace(request.Phone))
             {
                 customer.Phone = request.Phone.Trim();
+                updated = true;
+            }
+
+            if (updated)
+            {
                 customer.UpdatedAt = DateTime.UtcNow;
             }
 
