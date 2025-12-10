@@ -26,9 +26,6 @@ namespace PolicyManagement.Core.Entities
         [Required]
         public PolicyStatus Status { get; set; } = PolicyStatus.Activa;
 
-        [Required]
-        public bool IsActive { get; set; } = true;
-
         // Relación con Client
         public int ClientId { get; set; }
         public Client Client { get; set; } = null!;

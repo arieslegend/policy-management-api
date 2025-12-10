@@ -55,9 +55,6 @@ namespace PolicyManagement.Infrastructure.Persistence
                 .HasIndex(p => p.Type);
 
             modelBuilder.Entity<Policy>()
-                .HasIndex(p => p.IsActive);
-
-            modelBuilder.Entity<Policy>()
                 .HasIndex(p => p.StartDate);
 
             modelBuilder.Entity<Policy>()
