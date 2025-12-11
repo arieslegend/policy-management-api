@@ -77,6 +77,8 @@ export class AuthState {
     // Simulación de autenticación básica
     // En producción, esto llamaría a una API real
     setTimeout(() => {
+      console.log('Intentando login con:', action.payload.email);
+      
       if (action.payload.email === 'admin@policy.com' && action.payload.password === 'admin123') {
         const adminUser: User = {
           id: 1,
@@ -86,6 +88,7 @@ export class AuthState {
           phone: '+1234567890',
           role: 'admin'
         };
+        console.log('Login admin exitoso');
         ctx.dispatch(new LoginSuccess({ user: adminUser, token: 'admin-token' }));
       } else if (action.payload.email === 'client@policy.com' && action.payload.password === 'client123') {
         const clientUser: User = {
@@ -96,8 +99,10 @@ export class AuthState {
           phone: '+0987654321',
           role: 'client'
         };
+        console.log('Login client exitoso');
         ctx.dispatch(new LoginSuccess({ user: clientUser, token: 'client-token' }));
       } else {
+        console.log('Login fallido');
         ctx.dispatch(new LoginFailure({ error: 'Credenciales inválidas' }));
       }
     }, 1000);
@@ -112,10 +117,14 @@ export class AuthState {
       isLoading: false
     });
     
+    console.log('LoginSuccess - User role:', action.payload.user.role);
+    
     // Redirigir según el rol
     if (action.payload.user.role === 'admin') {
+      console.log('Redirigiendo a /admin');
       this.router.navigate(['/admin']);
     } else {
+      console.log('Redirigiendo a /client');
       this.router.navigate(['/client']);
     }
   }

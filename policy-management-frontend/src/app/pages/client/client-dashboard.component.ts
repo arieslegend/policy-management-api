@@ -31,11 +31,11 @@ export class ClientDashboardComponent implements OnInit {
 
     // Crear observables para las estadísticas
     this.activePoliciesCount$ = this.policies$.pipe(
-      map(policies => policies?.filter(p => p.status === 'Activa').length || 0)
+      map(policies => policies?.filter(p => p.status === 0).length || 0)
     );
 
     this.cancelledPoliciesCount$ = this.policies$.pipe(
-      map(policies => policies?.filter(p => p.status === 'Cancelada').length || 0)
+      map(policies => policies?.filter(p => p.status === 1).length || 0)
     );
   }
 
@@ -43,18 +43,30 @@ export class ClientDashboardComponent implements OnInit {
     this.store.dispatch(new Logout());
   }
 
-  getPolicyTypeName(type: string): string {
-    return type;
+  getPolicyTypeName(type: number): string {
+    const types: { [key: number]: string } = {
+      0: 'Vida',
+      1: 'Automóvil',
+      2: 'Salud',
+      3: 'Hogar'
+    };
+    return types[type] || 'Desconocido';
   }
 
-  getPolicyStatusName(status: string): string {
-    return status;
+  getPolicyStatusName(status: number): string {
+    const statuses: { [key: number]: string } = {
+      0: 'Activa',
+      1: 'Cancelada',
+      2: 'Vencida'
+    };
+    return statuses[status] || 'Desconocido';
   }
 
-  getStatusClass(status: string): string {
-    const classes: { [key: string]: string } = {
-      'Activa': 'status-active',
-      'Cancelada': 'status-cancelled'
+  getStatusClass(status: number): string {
+    const classes: { [key: number]: string } = {
+      0: 'status-active',
+      1: 'status-cancelled',
+      2: 'status-expired'
     };
     return classes[status] || '';
   }

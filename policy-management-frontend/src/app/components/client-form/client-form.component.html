@@ -1,0 +1,91 @@
+<div class="form-container">
+  <div class="form-header">
+    <h2>{{ isEdit ? 'Editar Cliente' : 'Nuevo Cliente' }}</h2>
+    <button class="btn-close" (click)="onCancel()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="identificationNumber">Número de Identificación *</label>
+        <input
+          id="identificationNumber"
+          type="text"
+          formControlName="identificationNumber"
+          placeholder="1234567890"
+          maxlength="10"
+          class="form-control"
+          [class.error]="clientForm.get('identificationNumber')?.touched && clientForm.get('identificationNumber')?.invalid"
+        />
+        <div class="error-message" *ngIf="getErrorMessage('identificationNumber')">
+          {{ getErrorMessage('identificationNumber') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="fullName">Nombre Completo *</label>
+        <input
+          id="fullName"
+          type="text"
+          formControlName="fullName"
+          placeholder="Juan Pérez García"
+          class="form-control"
+          [class.error]="clientForm.get('fullName')?.touched && clientForm.get('fullName')?.invalid"
+        />
+        <div class="error-message" *ngIf="getErrorMessage('fullName')">
+          {{ getErrorMessage('fullName') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Correo Electrónico *</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="juan@example.com"
+          class="form-control"
+          [class.error]="clientForm.get('email')?.touched && clientForm.get('email')?.invalid"
+        />
+        <div class="error-message" *ngIf="getErrorMessage('email')">
+          {{ getErrorMessage('email') }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Teléfono *</label>
+        <input
+          id="phone"
+          type="tel"
+          formControlName="phone"
+          placeholder="+1234567890"
+          class="form-control"
+          [class.error]="clientForm.get('phone')?.touched && clientForm.get('phone')?.invalid"
+        />
+        <div class="error-message" *ngIf="getErrorMessage('phone')">
+          {{ getErrorMessage('phone') }}
+        </div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-outline" (click)="onCancel()" [disabled]="isLoading">
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="clientForm.invalid || isLoading">
+        <span *ngIf="!isLoading">{{ isEdit ? 'Actualizar' : 'Guardar' }}</span>
+        <span *ngIf="isLoading" class="loading-spinner">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 11-6.219-8.56"/>
+          </svg>
+          {{ isEdit ? 'Actualizando...' : 'Guardando...' }}
+        </span>
+      </button>
+    </div>
+  </form>
+</div>

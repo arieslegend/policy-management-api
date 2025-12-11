@@ -3,13 +3,15 @@ import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Logout } from '../../states/auth.state';
-import { LoadPolicies, LoadClients } from '../../states/policy.state';
+import { LoadPolicies, LoadClients, DeleteClient, DeletePolicy, SelectClient, SelectPolicy } from '../../states/policy.state';
 import { CommonModule } from '@angular/common';
+import { ClientFormComponent } from '../../components/client-form/client-form.component';
+import { PolicyFormComponent } from '../../components/policy-form/policy-form.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ClientFormComponent, PolicyFormComponent],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.scss']
 })
@@ -19,6 +21,11 @@ export class AdminDashboardComponent implements OnInit {
   user$!: Observable<any>;
   isLoading$!: Observable<boolean>;
   activePoliciesCount$!: Observable<number>;
+
+  showClientForm = false;
+  showPolicyForm = false;
+  selectedClient: any = null;
+  selectedPolicy: any = null;
 
   constructor(private store: Store) {}
 
@@ -33,7 +40,7 @@ export class AdminDashboardComponent implements OnInit {
 
     // Crear observable para las estadísticas
     this.activePoliciesCount$ = this.policies$.pipe(
-      map(policies => policies?.filter(p => p.status === 'Activa').length || 0)
+      map(policies => policies?.filter(p => p.status === 0).length || 0)
     );
   }
 
@@ -41,19 +48,100 @@ export class AdminDashboardComponent implements OnInit {
     this.store.dispatch(new Logout());
   }
 
-  getPolicyTypeName(type: string): string {
-    return type;
+  getPolicyTypeName(type: number): string {
+    const types: { [key: number]: string } = {
+      0: 'Vida',
+      1: 'Automóvil',
+      2: 'Salud',
+      3: 'Hogar'
+    };
+    return types[type] || 'Desconocido';
   }
 
-  getPolicyStatusName(status: string): string {
-    return status;
+  getPolicyStatusName(status: number): string {
+    const statuses: { [key: number]: string } = {
+      0: 'Activa',
+      1: 'Cancelada',
+      2: 'Vencida'
+    };
+    return statuses[status] || 'Desconocido';
   }
 
-  getStatusClass(status: string): string {
-    const classes: { [key: string]: string } = {
-      'Activa': 'status-active',
-      'Cancelada': 'status-cancelled'
+  getStatusClass(status: number): string {
+    const classes: { [key: number]: string } = {
+      0: 'status-active',
+      1: 'status-cancelled',
+      2: 'status-expired'
     };
     return classes[status] || '';
+  }
+
+  getClientName(clientId: number): string {
+    const clients = this.store.selectSnapshot((state: any) => state.policy.clients);
+    const client = clients.find((c: any) => c.id === clientId);
+    return client ? client.fullName : 'Desconocido';
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('es-ES');
+  }
+
+  // Métodos CRUD para Clientes
+  createClient(): void {
+    this.selectedClient = null;
+    this.showClientForm = true;
+    this.showPolicyForm = false;
+  }
+
+  editClient(client: any): void {
+    this.selectedClient = client;
+    this.showClientForm = true;
+    this.showPolicyForm = false;
+  }
+
+  deleteClient(clientId: number): void {
+    if (confirm('¿Está seguro de eliminar este cliente?')) {
+      this.store.dispatch(new DeleteClient(clientId));
+    }
+  }
+
+  // Métodos CRUD para Pólizas
+  createPolicy(): void {
+    this.selectedPolicy = null;
+    this.showPolicyForm = true;
+    this.showClientForm = false;
+  }
+
+  editPolicy(policy: any): void {
+    this.selectedPolicy = policy;
+    this.showPolicyForm = true;
+    this.showClientForm = false;
+  }
+
+  deletePolicy(policyId: number): void {
+    if (confirm('¿Está seguro de eliminar esta póliza?')) {
+      this.store.dispatch(new DeletePolicy(policyId));
+    }
+  }
+
+  // Manejo de formularios
+  onClientSaved(): void {
+    this.showClientForm = false;
+    this.selectedClient = null;
+  }
+
+  onClientCancelled(): void {
+    this.showClientForm = false;
+    this.selectedClient = null;
+  }
+
+  onPolicySaved(): void {
+    this.showPolicyForm = false;
+    this.selectedPolicy = null;
+  }
+
+  onPolicyCancelled(): void {
+    this.showPolicyForm = false;
+    this.selectedPolicy = null;
   }
 }

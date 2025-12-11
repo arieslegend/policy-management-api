@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { State, Action, StateContext, Selector } from '@ngxs/store';
+import { environment } from '../../environments/environment';
 
 export interface Policy {
   id: number;
-  type: 'Vida' | 'Automóvil' | 'Salud' | 'Hogar';
+  type: number; // 0=Vida, 1=Automóvil, 2=Salud, 3=Hogar
   startDate: string;
   endDate: string;
   insuredAmount: number;
-  status: 'Activa' | 'Cancelada';
+  status: number; // 0=Activa, 1=Cancelada, 2=Vencida
   clientId: number;
   createdAt: string;
   updatedAt?: string;
@@ -80,9 +81,34 @@ export class SelectPolicy {
   constructor(public payload: Policy | null) {}
 }
 
+export class CreateClient {
+  static readonly type = '[Client] Create Client';
+  constructor(public payload: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) {}
+}
+
+export class UpdateClient {
+  static readonly type = '[Client] Update Client';
+  constructor(public payload: { id: number; client: Partial<Client> }) {}
+}
+
+export class DeleteClient {
+  static readonly type = '[Client] Delete Client';
+  constructor(public payload: number) {}
+}
+
+export class CancelPolicy {
+  static readonly type = '[Policy] Cancel Policy';
+  constructor(public customerId: number, public policyId: number) {}
+}
+
 export class SelectClient {
   static readonly type = '[Policy] Select Client';
   constructor(public payload: Client | null) {}
+}
+
+export class UpdateCustomerProfile {
+  static readonly type = '[Customer] Update Profile';
+  constructor(public customerId: number, public profile: { email?: string; phone?: string }) {}
 }
 
 @State<PolicyStateModel>({
@@ -98,7 +124,21 @@ export class SelectClient {
 })
 @Injectable()
 export class PolicyState {
-  private apiBaseUrl = 'https://localhost:7001/api';
+  private apiBaseUrl = environment.apiUrl;
+
+  private async fetchWithAuth(endpoint: string, options?: RequestInit): Promise<Response> {
+    const token = localStorage.getItem('auth_token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...options?.headers
+    };
+
+    return fetch(`${this.apiBaseUrl}${endpoint}`, {
+      ...options,
+      headers
+    });
+  }
 
   @Selector()
   static policies(state: PolicyStateModel): Policy[] {
@@ -135,51 +175,11 @@ export class PolicyState {
     ctx.patchState({ isLoading: true, error: null });
     
     try {
-      // Simulación de datos - en producción usarías fetch real
-      const mockPolicies: Policy[] = [
-        {
-          id: 1,
-          type: 'Vida',
-          startDate: '2024-01-01',
-          endDate: '2025-01-01',
-          insuredAmount: 100000,
-          status: 'Activa',
-          clientId: 1,
-          createdAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 2,
-          type: 'Automóvil',
-          startDate: '2024-06-01',
-          endDate: '2025-06-01',
-          insuredAmount: 50000,
-          status: 'Activa',
-          clientId: 2,
-          createdAt: '2024-06-01T00:00:00Z'
-        },
-        {
-          id: 3,
-          type: 'Salud',
-          startDate: '2023-12-01',
-          endDate: '2024-12-01',
-          insuredAmount: 75000,
-          status: 'Cancelada',
-          clientId: 1,
-          createdAt: '2023-12-01T00:00:00Z'
-        },
-        {
-          id: 4,
-          type: 'Hogar',
-          startDate: '2024-03-01',
-          endDate: '2025-03-01',
-          insuredAmount: 120000,
-          status: 'Activa',
-          clientId: 2,
-          createdAt: '2024-03-01T00:00:00Z'
-        }
-      ];
+      const response = await this.fetchWithAuth('/policies');
+      if (!response.ok) throw new Error('Error al cargar pólizas');
       
-      ctx.dispatch(new LoadPoliciesSuccess(mockPolicies));
+      const policies: Policy[] = await response.json();
+      ctx.dispatch(new LoadPoliciesSuccess(policies));
     } catch (error) {
       ctx.dispatch(new LoadPoliciesFailure('Error al cargar pólizas'));
     }
@@ -206,27 +206,11 @@ export class PolicyState {
     ctx.patchState({ isLoading: true, error: null });
     
     try {
-      // Simulación de datos
-      const mockClients: Client[] = [
-        {
-          id: 1,
-          identificationNumber: '1234567890',
-          fullName: 'Juan Pérez',
-          email: 'juan@example.com',
-          phone: '+1234567890',
-          createdAt: '2024-01-01T00:00:00Z'
-        },
-        {
-          id: 2,
-          identificationNumber: '0987654321',
-          fullName: 'María García',
-          email: 'maria@example.com',
-          phone: '+0987654321',
-          createdAt: '2024-06-01T00:00:00Z'
-        }
-      ];
+      const response = await this.fetchWithAuth('/clients');
+      if (!response.ok) throw new Error('Error al cargar clientes');
       
-      ctx.dispatch(new LoadClientsSuccess(mockClients));
+      const clients: Client[] = await response.json();
+      ctx.dispatch(new LoadClientsSuccess(clients));
     } catch (error) {
       ctx.dispatch(new LoadClientsFailure('Error al cargar clientes'));
     }
@@ -253,13 +237,14 @@ export class PolicyState {
     ctx.patchState({ isLoading: true, error: null });
     
     try {
-      // Simulación de creación
-      const newPolicy: Policy = {
-        ...action.payload,
-        id: Date.now(),
-        createdAt: new Date().toISOString()
-      };
+      const response = await this.fetchWithAuth('/policies', {
+        method: 'POST',
+        body: JSON.stringify(action.payload)
+      });
       
+      if (!response.ok) throw new Error('Error al crear póliza');
+      
+      const newPolicy: Policy = await response.json();
       const currentPolicies = ctx.getState().policies;
       ctx.patchState({
         policies: [...currentPolicies, newPolicy],
@@ -312,6 +297,139 @@ export class PolicyState {
     } catch (error) {
       ctx.patchState({
         error: 'Error al eliminar póliza',
+        isLoading: false
+      });
+    }
+  }
+
+  @Action(CreateClient)
+  async createClient(ctx: StateContext<PolicyStateModel>, action: CreateClient) {
+    ctx.patchState({ isLoading: true, error: null });
+    
+    try {
+      const response = await this.fetchWithAuth('/clients', {
+        method: 'POST',
+        body: JSON.stringify(action.payload)
+      });
+      
+      if (!response.ok) throw new Error('Error al crear cliente');
+      
+      const newClient: Client = await response.json();
+      const currentClients = ctx.getState().clients;
+      ctx.patchState({
+        clients: [...currentClients, newClient],
+        isLoading: false
+      });
+    } catch (error) {
+      ctx.patchState({
+        error: 'Error al crear cliente',
+        isLoading: false
+      });
+    }
+  }
+
+  @Action(UpdateClient)
+  async updateClient(ctx: StateContext<PolicyStateModel>, action: UpdateClient) {
+    ctx.patchState({ isLoading: true, error: null });
+    
+    try {
+      const response = await this.fetchWithAuth(`/clients/${action.payload.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(action.payload.client)
+      });
+      
+      if (!response.ok) throw new Error('Error al actualizar cliente');
+      
+      const currentClients = ctx.getState().clients;
+      const updatedClients = currentClients.map(client =>
+        client.id === action.payload.id
+          ? { ...client, ...action.payload.client, updatedAt: new Date().toISOString() }
+          : client
+      );
+      
+      ctx.patchState({
+        clients: updatedClients,
+        isLoading: false
+      });
+    } catch (error) {
+      ctx.patchState({
+        error: 'Error al actualizar cliente',
+        isLoading: false
+      });
+    }
+  }
+
+  @Action(DeleteClient)
+  async deleteClient(ctx: StateContext<PolicyStateModel>, action: DeleteClient) {
+    ctx.patchState({ isLoading: true, error: null });
+    
+    try {
+      const response = await this.fetchWithAuth(`/clients/${action.payload}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error('Error al eliminar cliente');
+      
+      const currentClients = ctx.getState().clients;
+      const filteredClients = currentClients.filter(client => client.id !== action.payload);
+      
+      ctx.patchState({
+        clients: filteredClients,
+        isLoading: false
+      });
+    } catch (error) {
+      ctx.patchState({
+        error: 'Error al eliminar cliente',
+        isLoading: false
+      });
+    }
+  }
+
+  @Action(CancelPolicy)
+  async cancelPolicy(ctx: StateContext<PolicyStateModel>, action: CancelPolicy) {
+    ctx.patchState({ isLoading: true, error: null });
+    
+    try {
+      const response = await this.fetchWithAuth(`/customers/${action.customerId}/policies/${action.policyId}/cancel`, {
+        method: 'POST'
+      });
+      
+      if (!response.ok) throw new Error('Error al cancelar póliza');
+      
+      // Actualizar estado de la póliza localmente
+      const currentPolicies = ctx.getState().policies;
+      const updatedPolicies = currentPolicies.map(policy =>
+        policy.id === action.policyId ? { ...policy, status: 1 } : policy
+      );
+      
+      ctx.patchState({
+        policies: updatedPolicies,
+        isLoading: false
+      });
+    } catch (error) {
+      ctx.patchState({
+        error: 'Error al cancelar póliza',
+        isLoading: false
+      });
+    }
+  }
+
+  @Action(UpdateCustomerProfile)
+  async updateCustomerProfile(ctx: StateContext<PolicyStateModel>, action: UpdateCustomerProfile) {
+    ctx.patchState({ isLoading: true, error: null });
+    
+    try {
+      const response = await this.fetchWithAuth(`/customers/${action.customerId}/profile`, {
+        method: 'PUT',
+        body: JSON.stringify(action.profile)
+      });
+      
+      if (!response.ok) throw new Error('Error al actualizar perfil');
+      
+      ctx.patchState({ isLoading: false });
+    } catch (error) {
+      ctx.patchState({
+        error: 'Error al actualizar perfil',
         isLoading: false
       });
     }
