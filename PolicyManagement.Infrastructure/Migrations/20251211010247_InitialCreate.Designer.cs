@@ -12,7 +12,7 @@ using PolicyManagement.Infrastructure.Persistence;
 namespace PolicyManagement.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251210064124_InitialCreate")]
+    [Migration("20251211010247_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -90,11 +90,11 @@ namespace PolicyManagement.Infrastructure.Migrations
                     b.Property<decimal>("InsuredAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
@@ -107,8 +107,6 @@ namespace PolicyManagement.Infrastructure.Migrations
                     b.HasIndex("ClientId");
 
                     b.HasIndex("EndDate");
-
-                    b.HasIndex("IsActive");
 
                     b.HasIndex("StartDate");
 
