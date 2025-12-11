@@ -24,13 +24,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Policy Management API v1"));
     
-    // Apply migrations in development
+    // Apply migrations in development (only for relational databases)
     using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate();
+        // Only apply migrations for relational databases
+        if (context.Database.IsRelational())
+        {
+            context.Database.Migrate();
+        }
     }
     catch (Exception ex)
     {
@@ -44,3 +48,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

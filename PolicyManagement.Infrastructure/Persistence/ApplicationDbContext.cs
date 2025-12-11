@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using PolicyManagement.Core.Entities;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PolicyManagement.Infrastructure.Persistence
 {
@@ -11,6 +12,7 @@ namespace PolicyManagement.Infrastructure.Persistence
         {
         }
 
+        [ExcludeFromCodeCoverage]
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
