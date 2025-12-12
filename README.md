@@ -70,7 +70,7 @@ https://policy-management-app.wittysmoke-e662ca7d.westus.azurecontainerapps.io/
 
 ### API Backend
 - URL: https://policy-management-api.azurewebsites.net/api
-- Documentación Swagger disponible en /swagger
+- Documentación Swagger disponible en [/swagger](https://policy-management-api.azurewebsites.net/swagger/index.html)
 
 ### Base de Datos
 - SQL Server en Azure
