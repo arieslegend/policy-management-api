@@ -1,5 +1,5 @@
 # Multi-stage build for Angular application
-FROM node:18.20.8-alpine AS builder
+FROM node:20.19.0-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -24,6 +24,10 @@ FROM nginx:alpine AS production
 
 # Copy built app from builder stage
 COPY --from=builder /app/dist/policy-management-frontend/browser /usr/share/nginx/html
+
+# Remove default nginx index.html and use Angular's
+RUN rm /usr/share/nginx/html/index.html && \
+    mv /usr/share/nginx/html/index.csr.html /usr/share/nginx/html/index.html
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
