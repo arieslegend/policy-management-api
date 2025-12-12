@@ -53,14 +53,14 @@ docker-compose up
 npm ci --legacy-peer-deps
 \`\`\`
 
-### Servidor de desarrollo
+### Correr de forma local
 \`\`\`bash
-ng serve
+npm start
 \`\`\`
 
 ### Construcción para producción
 \`\`\`bash
-ng build
+npm run build
 \`\`\`
 
 ## Despliegue en Azure
