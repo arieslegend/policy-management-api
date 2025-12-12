@@ -37,53 +37,68 @@
     </div>
 
     <section class="policies-section">
-      <h2 class="section-title">Mis Pólizas</h2>
-      
-      <div class="policies-table-container">
-        <table class="policies-table" *ngIf="policies$ | async as policies; else loading">
-          <thead>
-            <tr>
-              <th>Tipo</th>
-              <th>Estado</th>
-              <th>Inicio</th>
-              <th>Vencimiento</th>
-              <th>Monto Asegurado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let policy of policies">
-              <td>{{ getPolicyTypeName(policy.type) }}</td>
-              <td>
-                <span class="status-badge" [ngClass]="getStatusClass(policy.status)">
-                  {{ getPolicyStatusName(policy.status) }}
-                </span>
-              </td>
-              <td>{{ formatDate(policy.startDate) }}</td>
-              <td>{{ formatDate(policy.endDate) }}</td>
-              <td>${{ policy.insuredAmount | number }}</td>
-              <td>
-                <button class="btn btn-danger btn-sm" 
-                        *ngIf="policy.status === 0" 
-                        (click)="cancelPolicy(policy.id)"
-                        title="Cancelar Póliza">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  Cancelar
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <ng-template #loading>
-          <div class="loading-spinner">
-            <div class="spinner"></div>
-            <p>Cargando pólizas...</p>
-          </div>
-        </ng-template>
+      <div class="section-header">
+        <h2 class="section-title">Mis Pólizas</h2>
       </div>
+      
+      <div class="policies-grid" *ngIf="policies$ | async as policies; else loading">
+        <div class="policy-card" *ngFor="let policy of policies">
+          <div class="policy-header">
+            <div class="policy-type">
+              <div class="type-icon" [ngClass]="getTypeIconClass(policy.type)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div class="policy-info">
+                <h3 class="policy-title">{{ getPolicyTypeName(policy.type) }}</h3>
+                <p class="policy-id">Póliza #{{ policy.id }}</p>
+              </div>
+            </div>
+            <div class="policy-status">
+              <span class="status-badge" [ngClass]="getStatusClass(policy.status)">
+                <span class="status-dot"></span>
+                {{ getPolicyStatusName(policy.status) }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="policy-details">
+            <div class="detail-row">
+              <span class="detail-label">Inicio</span>
+              <span class="detail-value">{{ formatDate(policy.startDate) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Vencimiento</span>
+              <span class="detail-value">{{ formatDate(policy.endDate) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Monto Asegurado</span>
+              <span class="detail-value amount">${{ policy.insuredAmount | number }}</span>
+            </div>
+          </div>
+          
+          <div class="policy-actions">
+            <button class="btn btn-danger" 
+                    *ngIf="policy.status === 0" 
+                    (click)="cancelPolicy(policy.id)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <ng-template #loading>
+        <div class="loading-state">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-3 text-muted">Cargando pólizas...</p>
+        </div>
+      </ng-template>
     </section>
 
     <div class="loading-overlay" *ngIf="isLoading$ | async">

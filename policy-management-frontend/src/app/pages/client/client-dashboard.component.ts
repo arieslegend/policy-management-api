@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Logout } from '../../states/auth.state';
-import { LoadPolicies, UpdatePolicy } from '../../states/policy.state';
+import { LoadPolicies, CancelPolicy } from '../../states/policy.state';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 
@@ -85,6 +85,16 @@ export class ClientDashboardComponent implements OnInit {
     return statuses[status] || 'Desconocido';
   }
 
+  getTypeIconClass(type: number): string {
+    const iconClasses: { [key: number]: string } = {
+      0: 'type-auto',
+      1: 'type-home', 
+      2: 'type-life',
+      3: 'type-health'
+    };
+    return iconClasses[type] || 'type-default';
+  }
+
   getStatusClass(status: number): string {
     const classes: { [key: number]: string } = {
       0: 'status-active',
@@ -108,17 +118,24 @@ export class ClientDashboardComponent implements OnInit {
   // Métodos para cancelación de pólizas
   cancelPolicy(policyId: number): void {
     if (confirm('¿Está seguro de cancelar esta póliza? Esta acción no se puede deshacer.')) {
-      this.store.dispatch(new UpdatePolicy({ 
-        id: policyId, 
-        policy: { status: 1 } // 1 = Cancelada
-      })).subscribe({
-        next: () => {
-          console.log('Póliza cancelada exitosamente');
-        },
-        error: (error) => {
-          console.error('Error al cancelar póliza:', error);
-        }
-      });
+      // Obtener el cliente actual para el endpoint específico
+      const currentUser = this.store.selectSnapshot(state => state.auth.user);
+      
+      if (currentUser && currentUser.role === 'client') {
+        // Usar el endpoint específico de cancelación
+        this.store.dispatch(new CancelPolicy({ 
+          customerId: currentUser.id, 
+          policyId: policyId
+        })).subscribe({
+          next: () => {
+            console.log('Póliza cancelada exitosamente');
+          },
+          error: (error) => {
+            console.error('Error al cancelar póliza:', error);
+            alert('Error al cancelar la póliza. Por favor, inténtelo nuevamente.');
+          }
+        });
+      }
     }
   }
 

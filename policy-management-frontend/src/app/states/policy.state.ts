@@ -71,6 +71,11 @@ export class UpdatePolicy {
   constructor(public payload: { id: number; policy: Partial<Policy> }) {}
 }
 
+export class CancelPolicy {
+  static readonly type = '[Policy] Cancel Policy';
+  constructor(public payload: { customerId: number; policyId: number }) {}
+}
+
 export class DeletePolicy {
   static readonly type = '[Policy] Delete Policy';
   constructor(public payload: number) {}
@@ -94,11 +99,6 @@ export class UpdateClient {
 export class DeleteClient {
   static readonly type = '[Client] Delete Client';
   constructor(public payload: number) {}
-}
-
-export class CancelPolicy {
-  static readonly type = '[Policy] Cancel Policy';
-  constructor(public customerId: number, public policyId: number) {}
 }
 
 export class SelectClient {
@@ -276,6 +276,41 @@ export class PolicyState {
     }
   }
 
+  @Action(CancelPolicy)
+  async cancelPolicy(ctx: StateContext<PolicyStateModel>, action: CancelPolicy) {
+    ctx.patchState({ isLoading: true, error: null });
+    
+    try {
+      const response = await this.fetchWithAuth(`/customers/${action.payload.customerId}/policies/${action.payload.policyId}/cancel`, {
+        method: 'POST'
+      });
+      
+      if (!response.ok) throw new Error('Error al cancelar póliza');
+      
+      const currentPolicies = ctx.getState().policies;
+      
+      // Actualizar localmente el status de la póliza a cancelada
+      const updatedPolicies = currentPolicies.map(policy =>
+        policy.id === action.payload.policyId
+          ? { ...policy, status: 1, updatedAt: new Date().toISOString() }
+          : policy
+      );
+      
+      ctx.patchState({
+        policies: updatedPolicies,
+        isLoading: false
+      });
+      
+      console.log('Póliza cancelada exitosamente');
+    } catch (error) {
+      console.error('Error al cancelar póliza:', error);
+      ctx.patchState({
+        error: 'Error al cancelar póliza',
+        isLoading: false
+      });
+    }
+  }
+
   @Action(UpdatePolicy)
   async updatePolicy(ctx: StateContext<PolicyStateModel>, action: UpdatePolicy) {
     ctx.patchState({ isLoading: true, error: null });
@@ -413,35 +448,6 @@ export class PolicyState {
     } catch (error) {
       ctx.patchState({
         error: 'Error al eliminar cliente',
-        isLoading: false
-      });
-    }
-  }
-
-  @Action(CancelPolicy)
-  async cancelPolicy(ctx: StateContext<PolicyStateModel>, action: CancelPolicy) {
-    ctx.patchState({ isLoading: true, error: null });
-    
-    try {
-      const response = await this.fetchWithAuth(`/customers/${action.customerId}/policies/${action.policyId}/cancel`, {
-        method: 'POST'
-      });
-      
-      if (!response.ok) throw new Error('Error al cancelar póliza');
-      
-      // Actualizar estado de la póliza localmente
-      const currentPolicies = ctx.getState().policies;
-      const updatedPolicies = currentPolicies.map(policy =>
-        policy.id === action.policyId ? { ...policy, status: 1 } : policy
-      );
-      
-      ctx.patchState({
-        policies: updatedPolicies,
-        isLoading: false
-      });
-    } catch (error) {
-      ctx.patchState({
-        error: 'Error al cancelar póliza',
         isLoading: false
       });
     }
