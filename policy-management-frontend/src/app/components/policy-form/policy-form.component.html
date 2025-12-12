@@ -100,8 +100,8 @@
           class="form-control"
           [class.error]="policyForm.get('status')?.touched && policyForm.get('status')?.invalid"
         >
-          <option value="">Seleccionar estado</option>
-          <option *ngFor="let status of policyStatuses" [value]="status.value">
+          <option [ngValue]="null">Seleccionar estado</option>
+          <option *ngFor="let status of policyStatuses" [ngValue]="status.value">
             {{ status.label }}
           </option>
         </select>

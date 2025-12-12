@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngxs/store';
-import { CreatePolicy, UpdatePolicy } from '../../states/policy.state';
+import { CreatePolicy, UpdatePolicy, LoadPolicies } from '../../states/policy.state';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -105,8 +105,9 @@ export class PolicyFormComponent implements OnInit {
     this.isLoading = true;
     const formData = this.policyForm.value;
 
-    // Debug: mostrar el valor del tipo
+    // Debug: mostrar el valor del tipo y estado
     console.log('Tipo de póliza:', formData.type, typeof formData.type);
+    console.log('Estado de póliza:', formData.status, typeof formData.status);
 
     // Convertir fechas al formato ISO
     formData.startDate = new Date(formData.startDate).toISOString();
@@ -119,6 +120,7 @@ export class PolicyFormComponent implements OnInit {
       this.store.dispatch(new UpdatePolicy({ id: this.policy.id, policy: formData })).subscribe({
         next: () => {
           this.isLoading = false;
+          console.log('Póliza actualizada exitosamente');
           this.saved.emit();
         },
         error: (error) => {

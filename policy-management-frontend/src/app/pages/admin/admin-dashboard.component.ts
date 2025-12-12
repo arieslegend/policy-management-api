@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, ApplicationRef } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { Logout } from '../../states/auth.state';
 import { LoadPolicies, LoadClients, DeleteClient, DeletePolicy, SelectClient, SelectPolicy } from '../../states/policy.state';
 import { CommonModule } from '@angular/common';
@@ -13,7 +13,8 @@ import { PolicyFormComponent } from '../../components/policy-form/policy-form.co
   standalone: true,
   imports: [CommonModule, ClientFormComponent, PolicyFormComponent],
   templateUrl: './admin-dashboard.component.html',
-  styleUrls: ['./admin-dashboard.component.scss']
+  styleUrls: ['./admin-dashboard.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdminDashboardComponent implements OnInit {
   policies$!: Observable<any[]>;
@@ -27,7 +28,7 @@ export class AdminDashboardComponent implements OnInit {
   selectedClient: any = null;
   selectedPolicy: any = null;
 
-  constructor(private store: Store) {}
+  constructor(private store: Store, private cdr: ChangeDetectorRef, private appRef: ApplicationRef) {}
 
   ngOnInit(): void {
     this.policies$ = this.store.select(state => state.policy.policies);
@@ -42,6 +43,11 @@ export class AdminDashboardComponent implements OnInit {
     this.activePoliciesCount$ = this.policies$.pipe(
       map(policies => policies?.filter(p => p.status === 0).length || 0)
     );
+
+    // Suscribirse a cambios de pólizas para forzar detección
+    this.policies$.pipe(take(1)).subscribe(() => {
+      this.cdr.detectChanges();
+    });
   }
 
   logout(): void {
@@ -138,6 +144,26 @@ export class AdminDashboardComponent implements OnInit {
   onPolicySaved(): void {
     this.showPolicyForm = false;
     this.selectedPolicy = null;
+    
+    // Forzar actualización usando múltiples métodos seguros
+    setTimeout(() => {
+      try {
+        // Método 1: ChangeDetectorRef si está disponible
+        if (this.cdr) {
+          this.cdr.detectChanges();
+        }
+        
+        // Método 2: ApplicationRef para forzar tick completo (con verificación)
+        if (this.appRef) {
+          this.appRef.tick();
+        }
+        
+        // Método 3: Recargar observable para forzar nueva referencia
+        this.policies$ = this.store.select(state => state.policy.policies);
+      } catch (error) {
+        console.error('Error al forzar actualización:', error);
+      }
+    }, 100);
   }
 
   onPolicyCancelled(): void {

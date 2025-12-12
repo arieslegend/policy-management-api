@@ -148,6 +148,54 @@ namespace PolicyManagement.API.Controllers
             return CreatedAtAction(nameof(GetPolicy), new { id = policy.Id }, response);
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdatePolicy(int id, UpdatePolicyRequest request)
+        {
+            var policy = await _context.Policies.FindAsync(id);
+            if (policy == null)
+            {
+                return NotFound();
+            }
+
+            var client = await _context.Clients.FindAsync(request.ClientId);
+            if (client == null)
+            {
+                ModelState.AddModelError(nameof(request.ClientId), 
+                    "El cliente especificado no existe");
+                return ValidationProblem(ModelState);
+            }
+
+            if (request.EndDate <= request.StartDate)
+            {
+                ModelState.AddModelError(nameof(request.EndDate), 
+                    "La fecha de expiración debe ser posterior a la fecha de inicio");
+                return ValidationProblem(ModelState);
+            }
+
+            policy.Type = request.Type;
+            policy.StartDate = request.StartDate;
+            policy.EndDate = request.EndDate;
+            policy.InsuredAmount = request.InsuredAmount;
+            policy.ClientId = request.ClientId;
+            policy.Status = request.Status;
+            policy.UpdatedAt = DateTime.UtcNow;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!PolicyExists(id))
+                {
+                    return NotFound();
+                }
+                throw;
+            }
+
+            return NoContent();
+        }
+
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdatePolicyStatus(int id, UpdatePolicyRequest request)
         {

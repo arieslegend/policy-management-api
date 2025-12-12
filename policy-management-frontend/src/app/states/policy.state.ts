@@ -263,7 +263,16 @@ export class PolicyState {
     ctx.patchState({ isLoading: true, error: null });
     
     try {
+      const response = await this.fetchWithAuth(`/policies/${action.payload.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(action.payload.policy)
+      });
+      
+      if (!response.ok) throw new Error('Error al actualizar póliza');
+      
       const currentPolicies = ctx.getState().policies;
+      
+      // Actualizar exactamente como UpdateClient - SIN usar respuesta de API
       const updatedPolicies = currentPolicies.map(policy =>
         policy.id === action.payload.id
           ? { ...policy, ...action.payload.policy, updatedAt: new Date().toISOString() }

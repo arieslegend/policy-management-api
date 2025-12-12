@@ -37,6 +37,22 @@ namespace PolicyManagement.API.DTOs.Policies
 
     public class UpdatePolicyRequest
     {
+        [Required(ErrorMessage = "El tipo de póliza es requerido")]
+        public PolicyType Type { get; set; }
+
+        [Required(ErrorMessage = "La fecha de inicio es requerida")]
+        public DateTime StartDate { get; set; }
+
+        [Required(ErrorMessage = "La fecha de expiración es requerida")]
+        public DateTime EndDate { get; set; }
+
+        [Required(ErrorMessage = "El monto asegurado es requerido")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El monto asegurado debe ser mayor a cero")]
+        public decimal InsuredAmount { get; set; }
+
+        [Required(ErrorMessage = "El ID del cliente es requerido")]
+        public int ClientId { get; set; }
+
         [Required(ErrorMessage = "El estado de la póliza es requerido")]
         public PolicyStatus Status { get; set; }
     }
