@@ -39,6 +39,11 @@ export class Logout {
   static readonly type = '[Auth] Logout';
 }
 
+export class UpdateUserProfile {
+  static readonly type = '[Auth] Update User Profile';
+  constructor(public payload: User) {}
+}
+
 @State<AuthStateModel>({
   name: 'auth',
   defaults: {
@@ -181,5 +186,12 @@ export class AuthState {
       isLoading: false
     });
     this.router.navigate(['/login']);
+  }
+
+  @Action(UpdateUserProfile)
+  updateUserProfile(ctx: StateContext<AuthStateModel>, action: UpdateUserProfile) {
+    ctx.patchState({
+      user: action.payload
+    });
   }
 }

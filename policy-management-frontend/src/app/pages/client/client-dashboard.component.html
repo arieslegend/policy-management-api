@@ -5,7 +5,16 @@
         <h1 class="dashboard-title">Mis Pólizas</h1>
         <p class="welcome-text">Bienvenido, {{ (user$ | async)?.fullName }}</p>
       </div>
-      <button class="btn btn-logout" (click)="logout()">Cerrar sesión</button>
+      <div class="header-actions">
+        <button class="btn btn-edit-profile" (click)="openEditModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Editar Perfil
+        </button>
+        <button class="btn btn-logout" (click)="logout()">Cerrar sesión</button>
+      </div>
     </div>
   </header>
 
@@ -100,6 +109,63 @@
         </div>
       </ng-template>
     </section>
+
+    <!-- Modal para editar información personal -->
+    <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">Editar Información Personal</h3>
+          <button class="btn-close" (click)="closeEditModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        
+        <form [formGroup]="editForm" (ngSubmit)="savePersonalInfo()" class="edit-form">
+          <div class="form-group">
+            <label for="phone">Teléfono</label>
+            <input 
+              id="phone" 
+              type="tel" 
+              formControlName="phone" 
+              class="form-control"
+              placeholder="+1 234 567 8900"
+              [class.is-invalid]="editForm.get('phone')?.invalid && editForm.get('phone')?.touched"
+            >
+            <div class="invalid-feedback" *ngIf="editForm.get('phone')?.invalid && editForm.get('phone')?.touched">
+              <span *ngIf="editForm.get('phone')?.errors?.['required']">El teléfono es requerido</span>
+              <span *ngIf="editForm.get('phone')?.errors?.['pattern']">Formato de teléfono inválido</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Correo electrónico</label>
+            <input 
+              id="email" 
+              type="email" 
+              formControlName="email" 
+              class="form-control"
+              placeholder="correo@ejemplo.com"
+              [class.is-invalid]="editForm.get('email')?.invalid && editForm.get('email')?.touched"
+            >
+            <div class="invalid-feedback" *ngIf="editForm.get('email')?.invalid && editForm.get('email')?.touched">
+              <span *ngIf="editForm.get('email')?.errors?.['required']">El correo es requerido</span>
+              <span *ngIf="editForm.get('email')?.errors?.['email']">Formato de correo inválido</span>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-outline-secondary" (click)="closeEditModal()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="editForm.invalid">
+              Guardar Cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <div class="loading-overlay" *ngIf="isLoading$ | async">
       <div class="spinner-border text-primary" role="status">

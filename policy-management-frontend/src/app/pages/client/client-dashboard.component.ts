@@ -3,8 +3,8 @@ import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Logout } from '../../states/auth.state';
-import { LoadPolicies, CancelPolicy } from '../../states/policy.state';
+import { Logout, UpdateUserProfile } from '../../states/auth.state';
+import { LoadPolicies, CancelPolicy, UpdateCustomerProfile } from '../../states/policy.state';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 
@@ -59,7 +59,7 @@ export class ClientDashboardComponent implements OnInit {
     // Inicializar formulario de edición
     this.editForm = this.fb.group({
       phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9\s\-\(\)]+$/)]],
-      address: ['', [Validators.required, Validators.minLength(5)]]
+      email: ['', [Validators.required, Validators.email]]
     });
   }
 
@@ -145,7 +145,7 @@ export class ClientDashboardComponent implements OnInit {
     if (currentUser) {
       this.editForm.patchValue({
         phone: currentUser.phone || '',
-        address: currentUser.address || ''
+        email: currentUser.email || ''
       });
     }
     this.showEditModal = true;
@@ -164,17 +164,34 @@ export class ClientDashboardComponent implements OnInit {
 
     const currentUser = this.store.selectSnapshot(state => state.auth.user);
     if (currentUser) {
-      // Aquí deberías dispatch una acción para actualizar el cliente
-      // Por ahora solo mostramos los datos en consola
-      console.log('Guardando información personal:', this.editForm.value);
-      
-      // TODO: Implementar UpdateClient action
-      // this.store.dispatch(new UpdateClient({ 
-      //   id: currentUser.id, 
-      //   client: this.editForm.value 
-      // }));
-      
-      this.closeEditModal();
+      // Dispatch acción para actualizar el perfil del cliente
+      this.store.dispatch(new UpdateCustomerProfile(
+        currentUser.id, 
+        {
+          email: this.editForm.value.email,
+          phone: this.editForm.value.phone
+        }
+      )).subscribe({
+        next: () => {
+          console.log('Perfil actualizado exitosamente');
+          
+          // Actualizar el usuario en el estado de autenticación
+          const updatedUser = {
+            ...currentUser,
+            email: this.editForm.value.email,
+            phone: this.editForm.value.phone
+          };
+          
+          // Dispatch acción para actualizar el usuario en AuthState
+          this.store.dispatch(new UpdateUserProfile(updatedUser));
+          
+          this.closeEditModal();
+        },
+        error: (error) => {
+          console.error('Error al actualizar perfil:', error);
+          alert('Error al actualizar el perfil. Por favor, inténtelo nuevamente.');
+        }
+      });
     }
   }
 
