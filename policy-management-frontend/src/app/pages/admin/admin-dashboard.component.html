@@ -94,13 +94,65 @@
   <section class="data-section">
     <div class="section-header">
       <h2 class="section-title">Gestión de Clientes</h2>
-      <button class="btn btn-primary" (click)="createClient()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Nuevo Cliente
-      </button>
+      <div class="header-actions">
+        <button class="btn btn-outline-secondary" (click)="toggleClientFilters()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+          </svg>
+          Filtrar
+        </button>
+        <button class="btn btn-primary" (click)="createClient()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Nuevo Cliente
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtros de Clientes -->
+    <div class="filters-panel" *ngIf="showClientFilters">
+      <form [formGroup]="clientFilters" class="filters-grid">
+        <div class="filter-group">
+          <label for="clientName">Nombre</label>
+          <input 
+            id="clientName" 
+            type="text" 
+            placeholder="Buscar por nombre..."
+            formControlName="name"
+            class="form-control">
+        </div>
+        
+        <div class="filter-group">
+          <label for="clientEmail">Correo</label>
+          <input 
+            id="clientEmail" 
+            type="email" 
+            placeholder="Buscar por correo..."
+            formControlName="email"
+            class="form-control">
+        </div>
+        
+        <div class="filter-group">
+          <label for="clientIdNumber">Identificación</label>
+          <input 
+            id="clientIdNumber" 
+            type="text" 
+            placeholder="Buscar por identificación..."
+            formControlName="identificationNumber"
+            class="form-control">
+        </div>
+        
+        <div class="filter-actions">
+          <button type="button" class="btn btn-outline-secondary" (click)="clearClientFilters()">
+            Limpiar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="applyClientFilters()">
+            Aplicar
+          </button>
+        </div>
+      </form>
     </div>
     
     <div class="table-container">
@@ -116,7 +168,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let client of (clients$ | async)">
+          <tr *ngFor="let client of (filteredClients$ | async)">
             <td>{{ client.id }}</td>
             <td>{{ client.identificationNumber }}</td>
             <td>{{ client.fullName }}</td>
@@ -148,13 +200,79 @@
   <section class="data-section">
     <div class="section-header">
       <h2 class="section-title">Gestión de Pólizas</h2>
-      <button class="btn btn-primary" (click)="createPolicy()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Nueva Póliza
-      </button>
+      <div class="header-actions">
+        <button class="btn btn-outline-secondary" (click)="togglePolicyFilters()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+          </svg>
+          Filtrar
+        </button>
+        <button class="btn btn-primary" (click)="createPolicy()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Nueva Póliza
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtros de Pólizas -->
+    <div class="filters-panel" *ngIf="showPolicyFilters">
+      <form [formGroup]="policyFilters" class="filters-grid">
+        <div class="filter-group">
+          <label for="policyType">Tipo de Póliza</label>
+          <select 
+            id="policyType" 
+            formControlName="type"
+            class="form-control">
+            <option value="">Todos los tipos</option>
+            <option value="0">Vida</option>
+            <option value="1">Automóvil</option>
+            <option value="2">Salud</option>
+            <option value="3">Hogar</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="policyStatus">Estado</label>
+          <select 
+            id="policyStatus" 
+            formControlName="status"
+            class="form-control">
+            <option value="">Todos los estados</option>
+            <option value="0">Activa</option>
+            <option value="1">Cancelada</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="policyStartDate">Fecha Inicio</label>
+          <input 
+            id="policyStartDate" 
+            type="date" 
+            formControlName="startDate"
+            class="form-control">
+        </div>
+        
+        <div class="filter-group">
+          <label for="policyEndDate">Fecha Fin</label>
+          <input 
+            id="policyEndDate" 
+            type="date" 
+            formControlName="endDate"
+            class="form-control">
+        </div>
+        
+        <div class="filter-actions">
+          <button type="button" class="btn btn-outline-secondary" (click)="clearPolicyFilters()">
+            Limpiar
+          </button>
+          <button type="button" class="btn btn-primary" (click)="applyPolicyFilters()">
+            Aplicar
+          </button>
+        </div>
+      </form>
     </div>
     
     <div class="table-container">
@@ -172,7 +290,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let policy of (policies$ | async)">
+          <tr *ngFor="let policy of (filteredPolicies$ | async)">
             <td>{{ policy.id }}</td>
             <td>{{ getPolicyTypeName(policy.type) }}</td>
             <td>{{ getClientName(policy.clientId) }}</td>

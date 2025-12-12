@@ -2,16 +2,18 @@ import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, Applicat
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Logout } from '../../states/auth.state';
 import { LoadPolicies, LoadClients, DeleteClient, DeletePolicy, SelectClient, SelectPolicy } from '../../states/policy.state';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 import { ClientFormComponent } from '../../components/client-form/client-form.component';
 import { PolicyFormComponent } from '../../components/policy-form/policy-form.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, ClientFormComponent, PolicyFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, ClientFormComponent, PolicyFormComponent],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -28,7 +30,22 @@ export class AdminDashboardComponent implements OnInit {
   selectedClient: any = null;
   selectedPolicy: any = null;
 
-  constructor(private store: Store, private cdr: ChangeDetectorRef, private appRef: ApplicationRef) {}
+  // Filtros
+  showClientFilters = false;
+  showPolicyFilters = false;
+  clientFilters!: FormGroup;
+  policyFilters!: FormGroup;
+
+  // Datos filtrados
+  filteredClients$!: Observable<any[]>;
+  filteredPolicies$!: Observable<any[]>;
+
+  constructor(
+    private store: Store,
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef,
+    private appRef: ApplicationRef
+  ) {}
 
   ngOnInit(): void {
     this.policies$ = this.store.select(state => state.policy.policies);
@@ -39,10 +56,28 @@ export class AdminDashboardComponent implements OnInit {
     this.store.dispatch(new LoadPolicies());
     this.store.dispatch(new LoadClients());
 
-    // Crear observable para las estadísticas
+    // Inicializar filtros
+    this.clientFilters = this.fb.group({
+      name: [''],
+      email: [''],
+      identificationNumber: ['']
+    });
+
+    this.policyFilters = this.fb.group({
+      type: [''],
+      status: [''],
+      startDate: [''],
+      endDate: ['']
+    });
+
+    // Crear observables para las estadísticas
     this.activePoliciesCount$ = this.policies$.pipe(
       map(policies => policies?.filter(p => p.status === 0).length || 0)
     );
+
+    // Inicializar datos filtrados
+    this.filteredClients$ = this.clients$;
+    this.filteredPolicies$ = this.policies$;
 
     // Suscribirse a cambios de pólizas para forzar detección
     this.policies$.pipe(take(1)).subscribe(() => {
@@ -167,5 +202,63 @@ export class AdminDashboardComponent implements OnInit {
   onPolicyCancelled(): void {
     this.showPolicyForm = false;
     this.selectedPolicy = null;
+  }
+
+  // Métodos para filtros de clientes
+  toggleClientFilters(): void {
+    this.showClientFilters = !this.showClientFilters;
+  }
+
+  applyClientFilters(): void {
+    const filters = this.clientFilters.value;
+    
+    this.filteredClients$ = this.clients$.pipe(
+      map(clients => {
+        return clients.filter(client => {
+          const nameMatch = !filters.name || 
+            client.fullName.toLowerCase().includes(filters.name.toLowerCase());
+          const emailMatch = !filters.email || 
+            client.email.toLowerCase().includes(filters.email.toLowerCase());
+          const idMatch = !filters.identificationNumber || 
+            client.identificationNumber.includes(filters.identificationNumber);
+          
+          return nameMatch && emailMatch && idMatch;
+        });
+      })
+    );
+  }
+
+  clearClientFilters(): void {
+    this.clientFilters.reset();
+    this.filteredClients$ = this.clients$;
+  }
+
+  // Métodos para filtros de pólizas
+  togglePolicyFilters(): void {
+    this.showPolicyFilters = !this.showPolicyFilters;
+  }
+
+  applyPolicyFilters(): void {
+    const filters = this.policyFilters.value;
+    
+    this.filteredPolicies$ = this.policies$.pipe(
+      map(policies => {
+        return policies.filter(policy => {
+          const typeMatch = !filters.type || policy.type === parseInt(filters.type);
+          const statusMatch = !filters.status || policy.status === parseInt(filters.status);
+          const startDateMatch = !filters.startDate || 
+            new Date(policy.startDate) >= new Date(filters.startDate);
+          const endDateMatch = !filters.endDate || 
+            new Date(policy.endDate) <= new Date(filters.endDate);
+          
+          return typeMatch && statusMatch && startDateMatch && endDateMatch;
+        });
+      })
+    );
+  }
+
+  clearPolicyFilters(): void {
+    this.policyFilters.reset();
+    this.filteredPolicies$ = this.policies$;
   }
 }
