@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { State, Action, StateContext, Selector } from '@ngxs/store';
 import { Router } from '@angular/router';
+import { PolicyStateModel } from './policy.state';
+import { Store } from '@ngxs/store';
 
 export interface User {
   id: number;
@@ -48,7 +50,7 @@ export class Logout {
 })
 @Injectable()
 export class AuthState {
-  constructor(private router: Router) {}
+  constructor(private router: Router, private store: Store) {}
 
   @Selector()
   static isAuthenticated(state: AuthStateModel): boolean {
@@ -79,6 +81,7 @@ export class AuthState {
     setTimeout(() => {
       console.log('Intentando login con:', action.payload.email);
       
+      // Validación para administrador
       if (action.payload.email === 'admin@policy.com' && action.payload.password === 'Admin2024!') {
         const adminUser: User = {
           id: 1,
@@ -90,19 +93,50 @@ export class AuthState {
         };
         console.log('Login admin exitoso');
         ctx.dispatch(new LoginSuccess({ user: adminUser, token: 'admin-token' }));
-      } else if (action.payload.email === 'client@policy.com' && action.payload.password === 'client123') {
+        return;
+      }
+      
+      // Validación dinámica para clientes - usar selectSnapshot para obtener estado actualizado
+      const store = ctx.getState as any;
+      console.log('Estado completo disponible:', Object.keys(store));
+      
+      // Usar selectSnapshot del store para obtener clientes del estado de políticas
+      let clients = [];
+      try {
+        console.log('Intentando obtener clientes usando selectSnapshot...');
+        const policyState = this.store.selectSnapshot(state => state.policy);
+        console.log('PolicyState obtenido:', policyState);
+        
+        if (policyState && policyState.clients) {
+          clients = policyState.clients;
+          console.log('Clientes obtenidos desde selectSnapshot:', clients.length);
+        } else {
+          console.log('No se encontraron clientes en el estado de políticas');
+        }
+      } catch (error) {
+        console.error('Error al usar selectSnapshot:', error);
+      }
+      
+      console.log('Clientes disponibles:', clients.map((c: any) => c.email));
+      
+      const client = clients.find((c: any) => c.email === action.payload.email);
+      console.log('Cliente encontrado:', client);
+      
+      if (client && action.payload.password === 'client123') {
         const clientUser: User = {
-          id: 2,
-          identificationNumber: 'CLIENT001',
-          fullName: 'Cliente Demo',
-          email: 'client@policy.com',
-          phone: '+0987654321',
+          id: client.id,
+          identificationNumber: client.identificationNumber,
+          fullName: client.fullName,
+          email: client.email,
+          phone: client.phone,
           role: 'client'
         };
-        console.log('Login client exitoso');
+        console.log('Login cliente exitoso para:', client.email);
         ctx.dispatch(new LoginSuccess({ user: clientUser, token: 'client-token' }));
       } else {
-        console.log('Login fallido');
+        console.log('Login fallido - Cliente no encontrado o contraseña incorrecta');
+        console.log('Email buscado:', action.payload.email);
+        console.log('Contraseña recibida:', action.payload.password);
         ctx.dispatch(new LoginFailure({ error: 'Credenciales inválidas' }));
       }
     }, 1000);

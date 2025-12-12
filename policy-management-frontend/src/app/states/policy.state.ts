@@ -127,12 +127,21 @@ export class PolicyState {
   private apiBaseUrl = environment.apiUrl;
 
   private async fetchWithAuth(endpoint: string, options?: RequestInit): Promise<Response> {
-    const token = localStorage.getItem('auth_token');
-    const headers = {
+    // Verificar si estamos en el navegador
+    const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+    
+    const headers: { [key: string]: string } = {
       'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-      ...options?.headers
+      ...options?.headers as { [key: string]: string }
     };
+
+    // Solo agregar token si estamos en el navegador
+    if (isBrowser) {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
 
     return fetch(`${this.apiBaseUrl}${endpoint}`, {
       ...options,
@@ -203,21 +212,30 @@ export class PolicyState {
 
   @Action(LoadClients)
   async loadClients(ctx: StateContext<PolicyStateModel>) {
+    console.log('PolicyState: Iniciando carga de clientes desde API');
     ctx.patchState({ isLoading: true, error: null });
     
     try {
+      console.log('PolicyState: Haciendo petición a /clients');
       const response = await this.fetchWithAuth('/clients');
+      console.log('PolicyState: Response status:', response.status);
+      
       if (!response.ok) throw new Error('Error al cargar clientes');
       
       const clients: Client[] = await response.json();
+      console.log('PolicyState: Clientes recibidos:', clients.length);
+      console.log('PolicyState: Emails de clientes:', clients.map(c => c.email));
+      
       ctx.dispatch(new LoadClientsSuccess(clients));
     } catch (error) {
+      console.error('PolicyState: Error al cargar clientes:', error);
       ctx.dispatch(new LoadClientsFailure('Error al cargar clientes'));
     }
   }
 
   @Action(LoadClientsSuccess)
   loadClientsSuccess(ctx: StateContext<PolicyStateModel>, action: LoadClientsSuccess) {
+    console.log('PolicyState: Guardando clientes en estado:', action.payload.length);
     ctx.patchState({
       clients: action.payload,
       isLoading: false

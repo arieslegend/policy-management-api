@@ -2,14 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Logout } from '../../states/auth.state';
-import { LoadPolicies } from '../../states/policy.state';
+import { LoadPolicies, UpdatePolicy } from '../../states/policy.state';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-client-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './client-dashboard.component.html',
   styleUrls: ['./client-dashboard.component.scss']
 })
@@ -19,15 +21,31 @@ export class ClientDashboardComponent implements OnInit {
   isLoading$!: Observable<boolean>;
   activePoliciesCount$!: Observable<number>;
   cancelledPoliciesCount$!: Observable<number>;
+  
+  showEditModal = false;
+  editForm!: FormGroup;
 
-  constructor(private store: Store) {}
+  constructor(
+    private store: Store,
+    private fb: FormBuilder
+  ) {}
 
   ngOnInit(): void {
-    this.policies$ = this.store.select(state => state.policy.policies);
     this.user$ = this.store.select(state => state.auth.user);
     this.isLoading$ = this.store.select(state => state.policy.isLoading);
 
     this.store.dispatch(new LoadPolicies());
+
+    // Filtrar pólizas solo del cliente actual
+    this.policies$ = this.store.select(state => state.policy.policies).pipe(
+      map(policies => {
+        const currentUser = this.store.selectSnapshot(state => state.auth.user);
+        if (currentUser && currentUser.role === 'client') {
+          return policies?.filter((policy: any) => policy.clientId === currentUser.id) || [];
+        }
+        return policies || [];
+      })
+    );
 
     // Crear observables para las estadísticas
     this.activePoliciesCount$ = this.policies$.pipe(
@@ -37,6 +55,12 @@ export class ClientDashboardComponent implements OnInit {
     this.cancelledPoliciesCount$ = this.policies$.pipe(
       map(policies => policies?.filter(p => p.status === 1).length || 0)
     );
+
+    // Inicializar formulario de edición
+    this.editForm = this.fb.group({
+      phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9\s\-\(\)]+$/)]],
+      address: ['', [Validators.required, Validators.minLength(5)]]
+    });
   }
 
   logout(): void {
@@ -75,5 +99,74 @@ export class ClientDashboardComponent implements OnInit {
     const diffTime = end.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('es-ES');
+  }
+
+  // Métodos para cancelación de pólizas
+  cancelPolicy(policyId: number): void {
+    if (confirm('¿Está seguro de cancelar esta póliza? Esta acción no se puede deshacer.')) {
+      this.store.dispatch(new UpdatePolicy({ 
+        id: policyId, 
+        policy: { status: 1 } // 1 = Cancelada
+      })).subscribe({
+        next: () => {
+          console.log('Póliza cancelada exitosamente');
+        },
+        error: (error) => {
+          console.error('Error al cancelar póliza:', error);
+        }
+      });
+    }
+  }
+
+  // Métodos para edición de información personal
+  openEditModal(): void {
+    const currentUser = this.store.selectSnapshot(state => state.auth.user);
+    if (currentUser) {
+      this.editForm.patchValue({
+        phone: currentUser.phone || '',
+        address: currentUser.address || ''
+      });
+    }
+    this.showEditModal = true;
+  }
+
+  closeEditModal(): void {
+    this.showEditModal = false;
+    this.editForm.reset();
+  }
+
+  savePersonalInfo(): void {
+    if (this.editForm.invalid) {
+      this.markFormGroupTouched(this.editForm);
+      return;
+    }
+
+    const currentUser = this.store.selectSnapshot(state => state.auth.user);
+    if (currentUser) {
+      // Aquí deberías dispatch una acción para actualizar el cliente
+      // Por ahora solo mostramos los datos en consola
+      console.log('Guardando información personal:', this.editForm.value);
+      
+      // TODO: Implementar UpdateClient action
+      // this.store.dispatch(new UpdateClient({ 
+      //   id: currentUser.id, 
+      //   client: this.editForm.value 
+      // }));
+      
+      this.closeEditModal();
+    }
+  }
+
+  private markFormGroupTouched(formGroup: FormGroup): void {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
   }
 }
