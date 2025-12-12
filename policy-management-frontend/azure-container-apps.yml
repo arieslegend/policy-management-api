@@ -1,0 +1,27 @@
+# Azure Container Apps configuration
+name: policy-management-app
+type: Microsoft.App/containerApps
+version: 0.1.0
+location: eastus
+properties:
+  managedEnvironmentId: /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.App/managedEnvironments/{environment-name}
+  configuration:
+    ingress:
+      external: true
+      targetPort: 80
+      allowInsecure: false
+      traffic:
+        - latestRevision: true
+          weight: 100
+      stickySessions:
+        affinity: none
+  template:
+    containers:
+      - image: policy-management-app:latest
+        name: policy-management-app
+        resources:
+          cpu: 0.5
+          memory: 1Gi
+        env:
+          - name: NODE_ENV
+            value: production
