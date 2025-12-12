@@ -296,6 +296,12 @@ export class PolicyState {
     ctx.patchState({ isLoading: true, error: null });
     
     try {
+      const response = await this.fetchWithAuth(`/policies/${action.payload}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error('Error al eliminar póliza');
+      
       const currentPolicies = ctx.getState().policies;
       const filteredPolicies = currentPolicies.filter(policy => policy.id !== action.payload);
       
