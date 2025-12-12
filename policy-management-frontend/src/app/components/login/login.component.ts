@@ -40,7 +40,7 @@ export class LoginComponent {
 
   // Credenciales de demostración
   get adminCredentials() {
-    return { email: 'admin@policy.com', password: 'admin123' };
+    return { email: 'admin@policy.com', password: 'Admin2024!' };
   }
 
   get clientCredentials() {

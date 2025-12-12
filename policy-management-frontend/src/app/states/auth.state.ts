@@ -79,7 +79,7 @@ export class AuthState {
     setTimeout(() => {
       console.log('Intentando login con:', action.payload.email);
       
-      if (action.payload.email === 'admin@policy.com' && action.payload.password === 'admin123') {
+      if (action.payload.email === 'admin@policy.com' && action.payload.password === 'Admin2024!') {
         const adminUser: User = {
           id: 1,
           identificationNumber: 'ADMIN001',
