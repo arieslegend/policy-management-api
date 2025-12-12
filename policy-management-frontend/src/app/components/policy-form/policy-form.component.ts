@@ -105,9 +105,15 @@ export class PolicyFormComponent implements OnInit {
     this.isLoading = true;
     const formData = this.policyForm.value;
 
+    // Debug: mostrar el valor del tipo
+    console.log('Tipo de póliza:', formData.type, typeof formData.type);
+
     // Convertir fechas al formato ISO
     formData.startDate = new Date(formData.startDate).toISOString();
     formData.endDate = new Date(formData.endDate).toISOString();
+
+    // Debug: mostrar el formData completo
+    console.log('FormData completo:', formData);
 
     if (this.isEdit) {
       this.store.dispatch(new UpdatePolicy({ id: this.policy.id, policy: formData })).subscribe({
@@ -115,7 +121,8 @@ export class PolicyFormComponent implements OnInit {
           this.isLoading = false;
           this.saved.emit();
         },
-        error: () => {
+        error: (error) => {
+          console.error('Error al actualizar póliza:', error);
           this.isLoading = false;
         }
       });
@@ -125,7 +132,8 @@ export class PolicyFormComponent implements OnInit {
           this.isLoading = false;
           this.saved.emit();
         },
-        error: () => {
+        error: (error) => {
+          console.error('Error al crear póliza:', error);
           this.isLoading = false;
         }
       });

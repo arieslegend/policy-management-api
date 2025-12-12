@@ -19,8 +19,8 @@
           class="form-control"
           [class.error]="policyForm.get('type')?.touched && policyForm.get('type')?.invalid"
         >
-          <option value="">Seleccionar tipo</option>
-          <option *ngFor="let type of policyTypes" [value]="type.value">
+          <option [ngValue]="null">Seleccionar tipo</option>
+          <option *ngFor="let type of policyTypes" [ngValue]="type.value">
             {{ type.label }}
           </option>
         </select>
