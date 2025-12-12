@@ -8,7 +8,7 @@ export interface Policy {
   startDate: string;
   endDate: string;
   insuredAmount: number;
-  status: number; // 0=Activa, 1=Cancelada, 2=Vencida
+  status: number; // 0=Activa, 1=Cancelada
   clientId: number;
   createdAt: string;
   updatedAt?: string;

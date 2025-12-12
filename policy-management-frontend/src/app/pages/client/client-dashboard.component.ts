@@ -56,8 +56,7 @@ export class ClientDashboardComponent implements OnInit {
   getPolicyStatusName(status: number): string {
     const statuses: { [key: number]: string } = {
       0: 'Activa',
-      1: 'Cancelada',
-      2: 'Vencida'
+      1: 'Cancelada'
     };
     return statuses[status] || 'Desconocido';
   }
@@ -65,10 +64,9 @@ export class ClientDashboardComponent implements OnInit {
   getStatusClass(status: number): string {
     const classes: { [key: number]: string } = {
       0: 'status-active',
-      1: 'status-cancelled',
-      2: 'status-expired'
+      1: 'status-cancelled'
     };
-    return classes[status] || '';
+    return classes[status] || 'status-unknown';
   }
 
   getDaysUntilExpiry(endDate: string): number {

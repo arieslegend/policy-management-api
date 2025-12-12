@@ -32,8 +32,7 @@ export class PolicyFormComponent implements OnInit {
 
   policyStatuses = [
     { value: 0, label: 'Activa' },
-    { value: 1, label: 'Cancelada' },
-    { value: 2, label: 'Vencida' }
+    { value: 1, label: 'Cancelada' }
   ];
 
   constructor(
